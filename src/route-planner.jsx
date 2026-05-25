@@ -1,7 +1,116 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, DollarSign, Clock, TrendingDown, ArrowRight, Zap, Heart, Map, AlertCircle, Trash2, Wifi, WifiOff, Code } from 'lucide-react';
 
-// ==================== API MOCKING SERVICE ====================
+// ==================== COMPOSANT CARTE OPENSTREETMAP ====================
+
+const MapComponent = ({ startLocation, endLocation }) => {
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+
+  useEffect(() => {
+    if (!mapContainer.current) return;
+
+    // Ajouter Leaflet dynamiquement
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = initMap;
+    document.head.appendChild(script);
+
+    const link = document.createElement('link');
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+
+    function initMap() {
+      if (map.current) return;
+
+      // Créer la carte centrée sur la France
+      map.current = window.L.map(mapContainer.current).setView([46.2276, 2.2137], 6);
+
+      // Ajouter OpenStreetMap
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map.current);
+
+      // Ajouter marqueurs si les villes sont remplies
+      if (startLocation) {
+        const startCoords = getCityCoords(startLocation);
+        if (startCoords) {
+          window.L.marker([startCoords.lat, startCoords.lng], {
+            icon: window.L.icon({
+              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34]
+            })
+          }).addTo(map.current).bindPopup(`📍 ${startLocation}`);
+        }
+      }
+
+      if (endLocation) {
+        const endCoords = getCityCoords(endLocation);
+        if (endCoords) {
+          window.L.marker([endCoords.lat, endCoords.lng], {
+            icon: window.L.icon({
+              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34]
+            })
+          }).addTo(map.current).bindPopup(`📍 ${endLocation}`);
+        }
+      }
+
+      // Adapter la vue si les deux villes sont présentes
+      if (startLocation && endLocation) {
+        const startCoords = getCityCoords(startLocation);
+        const endCoords = getCityCoords(endLocation);
+        if (startCoords && endCoords) {
+          const bounds = window.L.latLngBounds(
+            [startCoords.lat, startCoords.lng],
+            [endCoords.lat, endCoords.lng]
+          );
+          map.current.fitBounds(bounds, { padding: [50, 50] });
+        }
+      }
+    }
+  }, [startLocation, endLocation]);
+
+  return (
+    <div 
+      ref={mapContainer}
+      style={{
+        width: '100%',
+        height: '500px',
+        borderRadius: '12px',
+        border: '1px solid rgba(100, 116, 139, 0.5)'
+      }}
+    />
+  );
+};
+
+// Coordonnées des villes françaises
+function getCityCoords(city) {
+  const cities = {
+    'Paris': { lat: 48.8566, lng: 2.3522 },
+    'Marseille': { lat: 43.2965, lng: 5.3698 },
+    'Lyon': { lat: 45.7640, lng: 4.8357 },
+    'Bordeaux': { lat: 44.8378, lng: -0.5792 },
+    'Toulouse': { lat: 43.6047, lng: 1.4442 },
+    'Nice': { lat: 43.7102, lng: 7.2620 },
+    'Nantes': { lat: 47.2184, lng: -1.5536 },
+    'Strasbourg': { lat: 48.5734, lng: 7.7521 },
+    'Montpellier': { lat: 43.6108, lng: 3.8767 },
+    'Lille': { lat: 50.6292, lng: 3.0573 }
+  };
+  
+  const key = Object.keys(cities).find(k => city.toLowerCase().includes(k.toLowerCase()));
+  return key ? cities[key] : null;
+}
+
+// ==================== COMPOSANT PRINCIPAL ====================
 // 🎭 Ce service simule les vraies APIs (Google Maps, TomTom, OpenWeather)
 // 📡 Prêt à être remplacé par des appels réels en changeant les URLs et auth
 
@@ -577,17 +686,9 @@ const RoutePlanner = () => {
             {/* Tab: Carte */}
             {activeTab === 'map' && (
               <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700/50 rounded-2xl p-8">
-                <div className="bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl aspect-video flex items-center justify-center border border-slate-700/50">
-                  <div className="text-center">
-                    <Map size={48} className="mx-auto text-blue-400 mb-4" />
-                    <h3 className="text-white font-bold text-lg mb-2">Carte interactive (Mapbox/Leaflet)</h3>
-                    <p className="text-slate-400 text-sm max-w-xs">
-                      Les données API sont prêtes ! Connectez une vraie API de carte pour afficher les trajets en temps réel.
-                    </p>
-                    <div className="mt-4 pt-4 border-t border-slate-700">
-                      <p className="text-xs text-slate-500">Intégration Mapbox GL JS recommandée</p>
-                    </div>
-                  </div>
+                <MapComponent startLocation={startLocation} endLocation={endLocation} />
+                <div className="mt-4 text-center text-slate-400 text-sm">
+                  🗺️ Carte OpenStreetMap avec les marqueurs de départ et arrivée
                 </div>
               </div>
             )}
