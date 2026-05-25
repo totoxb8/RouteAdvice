@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, DollarSign, Clock, TrendingDown, ArrowRight, Zap, Heart, Map, AlertCircle, Trash2, Wifi, WifiOff, Code } from 'lucide-react';
+import { MapPin, DollarSign, Clock, TrendingDown, ArrowRight, Zap, Heart, Map, AlertCircle, Trash2, Code } from 'lucide-react';
 
 // ==================== COMPOSANT CARTE OPENSTREETMAP ====================
 
@@ -110,127 +110,55 @@ function getCityCoords(city) {
   return key ? cities[key] : null;
 }
 
-// ==================== COMPOSANT PRINCIPAL ====================
-// 🎭 Ce service simule les vraies APIs (Google Maps, TomTom, OpenWeather)
-// 📡 Prêt à être remplacé par des appels réels en changeant les URLs et auth
+// ==================== DONNÉES SIMULÉES (PAS BESOIN D'APIs) ====================
 
-const APIService = {
-  logs: [],
-
-  log: (message, data = null) => {
-    const logEntry = { timestamp: new Date().toLocaleTimeString(), message, data };
-    APIService.logs.push(logEntry);
-    console.log(`📡 ${message}`, data || '');
-    return logEntry;
+const SAMPLE_ROUTES = [
+  {
+    id: 1,
+    name: 'Route Rapide (Autoroute)',
+    distance: 285,
+    duration: 155,
+    tollCost: 35.50,
+    tollPercentage: 40,
+    timeGained: 45,
+    description: 'Autoroute A6 + A7',
+    segments: [
+      { type: 'toll', name: 'A6', distance: 150, cost: 18.50, traffic: 'moderate' },
+      { type: 'free', name: 'RN7', distance: 85, cost: 0, traffic: 'light' },
+      { type: 'toll', name: 'A7', distance: 50, cost: 17, traffic: 'heavy' }
+    ]
   },
-
-  // 🗺️ Simule Google Directions API
-  getDirections: async (startLocation, endLocation) => {
-    APIService.log('📍 Google Directions API', `${startLocation} → ${endLocation}`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const routes = [
-      {
-        id: 1,
-        name: 'Route Rapide (Autoroute)',
-        distance: 285,
-        duration: 155,
-        tollCost: 35.50,
-        tollPercentage: 40,
-        timeGained: 45,
-        description: 'Autoroute A6 + A7',
-        segments: [
-          { type: 'toll', name: 'A6', distance: 150, cost: 18.50, traffic: 'moderate' },
-          { type: 'free', name: 'RN7', distance: 85, cost: 0, traffic: 'light' },
-          { type: 'toll', name: 'A7', distance: 50, cost: 17, traffic: 'heavy' }
-        ]
-      },
-      {
-        id: 2,
-        name: 'Route Mixte Équilibrée',
-        distance: 310,
-        duration: 195,
-        tollCost: 15.80,
-        tollPercentage: 25,
-        timeGained: 5,
-        description: 'Mix autoroute/nationales',
-        segments: [
-          { type: 'toll', name: 'A6 partielle', distance: 80, cost: 8.80, traffic: 'light' },
-          { type: 'free', name: 'RN7 + RN102', distance: 230, cost: 0, traffic: 'moderate' }
-        ]
-      },
-      {
-        id: 3,
-        name: 'Route Économique',
-        distance: 330,
-        duration: 240,
-        tollCost: 2.50,
-        tollPercentage: 5,
-        timeGained: 0,
-        description: 'Nationales et routes régionales',
-        segments: [
-          { type: 'free', name: 'RN7 principale', distance: 320, cost: 0, traffic: 'light' },
-          { type: 'toll', name: 'Pont péage', distance: 10, cost: 2.50, traffic: 'light' }
-        ]
-      }
-    ];
-    
-    APIService.log('✅ Directions reçues', `${routes.length} itinéraires`);
-    return { status: 'OK', routes, apiUsed: 'Google Directions API' };
+  {
+    id: 2,
+    name: 'Route Mixte Équilibrée',
+    distance: 310,
+    duration: 195,
+    tollCost: 15.80,
+    tollPercentage: 25,
+    timeGained: 5,
+    description: 'Mix autoroute/nationales',
+    segments: [
+      { type: 'toll', name: 'A6 partielle', distance: 80, cost: 8.80, traffic: 'light' },
+      { type: 'free', name: 'RN7 + RN102', distance: 230, cost: 0, traffic: 'moderate' }
+    ]
   },
-
-  // 🚦 Simule TomTom Traffic API
-  getTrafficData: async (routeId) => {
-    APIService.log('🚗 TomTom Traffic API', `Route ${routeId}`);
-    await new Promise(resolve => setTimeout(resolve, 700));
-    
-    const trafficData = {
-      '8h': { congestion: 85, delays: 45, speed: 45, status: 'congestionné' },
-      '12h': { congestion: 45, delays: 15, speed: 110, status: 'normal' },
-      '17h': { congestion: 90, delays: 50, speed: 40, status: 'très congestionné' },
-      '20h': { congestion: 30, delays: 5, speed: 120, status: 'fluide' },
-      '23h': { congestion: 10, delays: 0, speed: 130, status: 'fluide' }
-    };
-    
-    APIService.log('✅ Données trafic reçues', '5 créneaux horaires');
-    return { status: 'OK', trafficData, timestamp: new Date().toISOString() };
-  },
-
-  // 📍 Simule Geocoding API
-  geocode: async (address) => {
-    APIService.log('🌍 Geocoding API', address);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const mockCoordinates = {
-      'Paris': { lat: 48.8566, lng: 2.3522, name: 'Paris, France' },
-      'Marseille': { lat: 43.2965, lng: 5.3698, name: 'Marseille, France' },
-      'Lyon': { lat: 45.7640, lng: 4.8357, name: 'Lyon, France' },
-      'Bordeaux': { lat: 44.8378, lng: -0.5792, name: 'Bordeaux, France' },
-      'Toulouse': { lat: 43.6047, lng: 1.4442, name: 'Toulouse, France' }
-    };
-    
-    const key = Object.keys(mockCoordinates).find(k => address.toLowerCase().includes(k.toLowerCase()));
-    const coords = key ? mockCoordinates[key] : { lat: 48.8566, lng: 2.3522, name: address };
-    
-    APIService.log('✅ Coordonnées trouvées', `${coords.lat}, ${coords.lng}`);
-    return { status: 'OK', location: coords };
-  },
-
-  // 💳 Simule API données péage
-  getTollData: async (routeSegments) => {
-    APIService.log('💰 Toll Data API', `${routeSegments.length} segments`);
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    APIService.log('✅ Données péage reçues', 'Vinci/Sanef');
-    return { 
-      status: 'OK',
-      provider: 'Vinci / Sanef',
-      currency: 'EUR'
-    };
+  {
+    id: 3,
+    name: 'Route Économique',
+    distance: 330,
+    duration: 240,
+    tollCost: 2.50,
+    tollPercentage: 5,
+    timeGained: 0,
+    description: 'Nationales et routes régionales',
+    segments: [
+      { type: 'free', name: 'RN7 principale', distance: 320, cost: 0, traffic: 'light' },
+      { type: 'toll', name: 'Pont péage', distance: 10, cost: 2.50, traffic: 'light' }
+    ]
   }
-};
+];
 
-// ==================== COMPONENT ====================
+// ==================== COMPOSANT PRINCIPAL ====================
 
 const RoutePlanner = () => {
   const [startLocation, setStartLocation] = useState('');
@@ -243,12 +171,10 @@ const RoutePlanner = () => {
   const [showFavorites, setShowFavorites] = useState(false);
   const [activeTab, setActiveTab] = useState('search');
   const [trafficData, setTrafficData] = useState({});
-  const [apiLogs, setApiLogs] = useState([]);
-  const [showApiLogs, setShowApiLogs] = useState(false);
 
   // Charger favoris au démarrage
   useEffect(() => {
-    const saved = localStorage.getItem('routeFavorites');
+    const saved = localStorage.getItem('routeAdviceFavorites');
     if (saved) {
       try {
         setFavorites(JSON.parse(saved));
@@ -263,13 +189,13 @@ const RoutePlanner = () => {
     const journey = { startLocation, endLocation, route, timestamp: new Date() };
     const updatedFavorites = [...favorites, journey];
     setFavorites(updatedFavorites);
-    localStorage.setItem('routeFavorites', JSON.stringify(updatedFavorites));
+    localStorage.setItem('routeAdviceFavorites', JSON.stringify(updatedFavorites));
   };
 
   const removeFavorite = (index) => {
     const updated = favorites.filter((_, i) => i !== index);
     setFavorites(updated);
-    localStorage.setItem('routeFavorites', JSON.stringify(updated));
+    localStorage.setItem('routeAdviceFavorites', JSON.stringify(updated));
   };
 
   const loadFavorite = (favorite) => {
@@ -300,7 +226,7 @@ const RoutePlanner = () => {
     setSelectedRoute(route);
   };
 
-  // 🔥 FONCTION PRINCIPALE - Calcul avec APIs
+  // Calcul des routes
   const calculateRoutes = async () => {
     if (!startLocation.trim() || !endLocation.trim()) {
       alert('Veuillez remplir les deux champs de localisation');
@@ -308,38 +234,31 @@ const RoutePlanner = () => {
     }
 
     setIsCalculating(true);
-    setApiLogs([]);
-    APIService.logs = [];
-    
+
     try {
-      // 1️⃣ Geocoding - Convertir adresses en coordonnées
-      const startCoords = await APIService.geocode(startLocation);
-      const endCoords = await APIService.geocode(endLocation);
+      // Simuler un délai réseau
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // 2️⃣ Directions - Obtenir les itinéraires
-      const directionsResult = await APIService.getDirections(startLocation, endLocation);
-
-      // 3️⃣ Traffic Data - Obtenir données de circulation
-      const trafficResult = await APIService.getTrafficData(1);
-      setTrafficData(trafficResult.trafficData);
-
-      // 4️⃣ Toll Data - Obtenir données de péage
-      const tollResult = await APIService.getTollData(directionsResult.routes[0].segments);
+      // Générer des données de circulation
+      const traffic = {};
+      ['8h', '12h', '17h', '20h', '23h'].forEach(hour => {
+        traffic[hour] = {
+          congestion: Math.floor(Math.random() * 100),
+          delays: Math.floor(Math.random() * 60)
+        };
+      });
+      setTrafficData(traffic);
 
       // Filtrer par budget et trier
-      const filtered = directionsResult.routes.filter(r => r.tollCost <= maxTollBudget);
+      const filtered = SAMPLE_ROUTES.filter(r => r.tollCost <= maxTollBudget);
       const sorted = filtered.sort((a, b) => b.timeGained - a.timeGained);
       
       setRoutes(sorted.slice(0, 2));
       setSelectedRoute(null);
-      
-      // Afficher logs
-      setApiLogs([...APIService.logs]);
-      APIService.log('✨ Calcul terminé avec succès', `${sorted.length} itinéraires trouvés`);
 
     } catch (error) {
-      APIService.log('❌ Erreur API', error.message);
-      setApiLogs([...APIService.logs]);
+      console.error('Erreur:', error);
+      alert('Erreur lors du calcul');
     }
     
     setIsCalculating(false);
@@ -363,61 +282,21 @@ const RoutePlanner = () => {
                 color: '#f8fafc',
                 fontFamily: "'Poppins', sans-serif"
               }}>RouteAdvice</h1>
-              <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full border border-blue-500/30">AVEC APIs</span>
+              <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full border border-blue-500/30">OSM</span>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowApiLogs(!showApiLogs)}
-                className="px-3 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white flex items-center gap-2 transition text-sm font-semibold"
-              >
-                <Code size={16} />
-                Logs
-              </button>
-              <button
-                onClick={() => setShowFavorites(!showFavorites)}
-                className="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white flex items-center gap-2 transition text-sm font-semibold"
-              >
-                <Heart size={18} />
-                Favoris ({favorites.length})
-              </button>
-            </div>
+            <button
+              onClick={() => setShowFavorites(!showFavorites)}
+              className="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white flex items-center gap-2 transition text-sm font-semibold"
+            >
+              <Heart size={18} />
+              Favoris ({favorites.length})
+            </button>
           </div>
           <p className="text-slate-400 text-sm">Trouvez la meilleure route selon votre budget de péage</p>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* API Logs Modal */}
-        {showApiLogs && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-slate-800 rounded-2xl max-w-2xl w-full max-h-96 overflow-y-auto border border-slate-700">
-              <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center">
-                <h2 className="text-white font-bold text-lg">📡 Logs API (MOCK)</h2>
-                <button onClick={() => setShowApiLogs(false)} className="text-slate-400 hover:text-white">✕</button>
-              </div>
-              
-              <div className="p-4 space-y-2 font-mono text-xs">
-                {apiLogs.length === 0 ? (
-                  <div className="text-slate-500 py-8 text-center">Lancez un calcul pour voir les logs API</div>
-                ) : (
-                  apiLogs.map((log, idx) => (
-                    <div key={idx} className="bg-slate-700/30 rounded p-2 border border-slate-600/50">
-                      <div className="text-blue-400">[{log.timestamp}]</div>
-                      <div className="text-slate-300">{log.message}</div>
-                      {log.data && <div className="text-slate-500 mt-1">{JSON.stringify(log.data).substring(0, 80)}...</div>}
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="bg-amber-500/10 border-t border-slate-700 p-4 border-amber-500/30">
-                <p className="text-amber-300 text-xs font-semibold mb-2">💡 Comment connecter les vraies APIs :</p>
-                <p className="text-amber-200/80 text-xs">Remplacez les URLs de fetch et les clés API dans le fichier source. Les mocks retournent déjà la bonne structure de données !</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Favoris Modal */}
         {showFavorites && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -466,9 +345,7 @@ const RoutePlanner = () => {
         <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700/50 rounded-2xl p-8 mb-8 shadow-2xl">
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-slate-300 text-sm font-semibold mb-2">
-                Point de départ
-              </label>
+              <label className="block text-slate-300 text-sm font-semibold mb-2">Point de départ</label>
               <input
                 type="text"
                 placeholder="Ex: Paris, Marseille, Lyon..."
@@ -478,9 +355,7 @@ const RoutePlanner = () => {
               />
             </div>
             <div>
-              <label className="block text-slate-300 text-sm font-semibold mb-2">
-                Destination
-              </label>
+              <label className="block text-slate-300 text-sm font-semibold mb-2">Destination</label>
               <input
                 type="text"
                 placeholder="Ex: Paris, Marseille, Lyon..."
@@ -519,7 +394,7 @@ const RoutePlanner = () => {
             {isCalculating ? (
               <>
                 <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                Calcul avec APIs en cours...
+                Calcul en cours...
               </>
             ) : (
               <>
@@ -594,7 +469,6 @@ const RoutePlanner = () => {
                     </h3>
                     <p className="text-slate-400 text-sm mb-4">{route.description}</p>
 
-                    {/* Metrics Grid */}
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       <div className="bg-slate-700/30 rounded-lg p-3 border border-slate-700/50">
                         <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
@@ -626,7 +500,6 @@ const RoutePlanner = () => {
                       </div>
                     </div>
 
-                    {/* Toll Percentage */}
                     <div className="mb-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-slate-400 text-xs">Pourcentage péage sur trajet</span>
@@ -640,7 +513,6 @@ const RoutePlanner = () => {
                       </div>
                     </div>
 
-                    {/* Segments */}
                     <div className="space-y-2 mb-4">
                       {route.segments.map((segment, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-sm">
@@ -661,7 +533,6 @@ const RoutePlanner = () => {
                       ))}
                     </div>
 
-                    {/* Buttons */}
                     <button
                       onClick={() => saveFavorite(route)}
                       className="w-full mb-2 py-2 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 bg-slate-700/50 text-slate-300 hover:bg-slate-700"
@@ -688,7 +559,7 @@ const RoutePlanner = () => {
               <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700/50 rounded-2xl p-8">
                 <MapComponent startLocation={startLocation} endLocation={endLocation} />
                 <div className="mt-4 text-center text-slate-400 text-sm">
-                  🗺️ Carte OpenStreetMap avec les marqueurs de départ et arrivée
+                  🗺️ Carte OpenStreetMap avec les marqueurs de départ (vert) et arrivée (rouge)
                 </div>
               </div>
             )}
@@ -766,29 +637,6 @@ const RoutePlanner = () => {
               <p className="text-slate-400">
                 Entrez votre point de départ et votre destination, puis définissez votre budget de péage maximum.
               </p>
-            </div>
-
-            {/* Documentation */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/30 rounded-2xl p-6">
-                <h3 className="text-purple-300 font-bold text-lg mb-3">🔗 APIs Mockées</h3>
-                <ul className="text-purple-200/80 text-sm space-y-2">
-                  <li>✓ Google Directions API</li>
-                  <li>✓ TomTom Traffic API</li>
-                  <li>✓ Geocoding API</li>
-                  <li>✓ Toll Data API</li>
-                </ul>
-              </div>
-
-              <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-2xl p-6">
-                <h3 className="text-emerald-300 font-bold text-lg mb-3">📚 Prochaines étapes</h3>
-                <ul className="text-emerald-200/80 text-sm space-y-2">
-                  <li>1. Obtenir clés API (Google/TomTom)</li>
-                  <li>2. Remplacer les URLs de mock</li>
-                  <li>3. Intégrer Mapbox pour la carte</li>
-                  <li>4. Connecter base de données</li>
-                </ul>
-              </div>
             </div>
           </div>
         )}
